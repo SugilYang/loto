@@ -119,7 +119,7 @@
 </head>
 <body>
 
-<a id="homeBtn" href="https://sugilyang.github.io/ets-safety/" title="안전포털">🏠</a>
+<a id="homeBtn" href="https://sugilyang.github.io/loto/" title="안전수칙준수인증 홈">🏠</a>
 
 <div class="wrap">
 
@@ -449,9 +449,9 @@ async function loadReport(){
   res.sessions.forEach(s=>{
     html+='<div class="rp-sess">'+
     '<div class="rp-sess-h"><span>'+esc(s.date)+' · '+esc(s.kind)+' 안전교육 (LOTO)</span><span>'+s.attendees.length+'명</span></div>'+
-    '<table class="rp"><tr><th>이름</th><th>소속</th><th>구분</th><th>서명</th><th>점수</th><th>결과</th><th>필증 발급일</th><th>만료일</th></tr>';
+    '<table class="rp"><tr><th>이름</th><th>교육이수일</th><th>소속</th><th>구분</th><th>서명</th><th>점수</th><th>결과</th><th>인증 시작일</th><th>만료일</th></tr>';
     s.attendees.forEach(a=>{
-      html+='<tr><td>'+esc(a.name)+'</td><td class="l">'+esc(a.dept)+'</td><td>'+esc(a.type)+'</td>'+
+      html+='<tr><td>'+esc(a.name)+'</td><td>'+esc(s.date)+'</td><td class="l">'+esc(a.dept)+'</td><td>'+esc(a.type)+'</td>'+
       '<td>'+(a.sig?'<img class="sig" src="'+a.sig+'">':'-')+'</td>'+
       '<td>'+(a.score!==''?esc(a.score)+'점':'-')+'</td>'+
       '<td class="'+(a.result==='합격'?'pass':(a.result==='불합격'?'fail':''))+'">'+esc(a.result)+'</td>'+
