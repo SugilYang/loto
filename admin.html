@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETS 안전수칙준수인증 — 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:"Noto Sans KR",sans-serif}
+  body{background:#EEF2F4;color:#1f2d3d;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding:20px 14px 60px}
+
+  .head{background:linear-gradient(135deg,#004D45 0%,#00695E 70%,#007A6E 100%);
+    border-radius:16px;padding:18px 20px;margin-bottom:14px;position:relative;overflow:hidden}
+  .head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
+    background:linear-gradient(90deg,#C9A227,#E8C766,#C9A227)}
+  .head .co{font-size:11px;color:#9FD6CE;font-weight:700;letter-spacing:1px}
+  .head h1{font-size:19px;font-weight:900;color:#fff}
+
+  .box{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 16px rgba(0,60,54,.08);margin-bottom:12px}
+  .box h2{font-size:15px;font-weight:900;color:#004D45;margin-bottom:12px}
+  label{display:block;font-size:12.5px;font-weight:800;color:#4a5c66;margin:10px 0 5px}
+  input[type=text],input[type=password],input[type=date]{width:100%;padding:12px;border:2px solid #d7e0e6;border-radius:10px;
+    font-size:15px;font-weight:700;background:#fff}
+  input:focus{outline:none;border-color:#00B8A6}
+
+  .btn{border:none;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;
+    color:#fff;background:linear-gradient(135deg,#004D45,#007A6E 60%,#00B8A6)}
+  .btn:active{transform:scale(.97)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.full{width:100%;padding:15px;font-size:15px;margin-top:12px}
+  .btn.gray{background:#8a9aa5}
+  .btn.red{background:linear-gradient(135deg,#8a1d16,#c0392b)}
+  .btn.gold{background:linear-gradient(135deg,#7A4D00,#B8860B 60%,#D4A843)}
+  .btn.sm{padding:9px 13px;font-size:13px}
+
+  .err{background:#FDECEA;border:1.5px solid #F5B8B2;color:#b3261e;border-radius:10px;
+    padding:11px 13px;font-size:13px;font-weight:700;margin-top:10px;display:none;white-space:pre-line}
+  .info{background:#F4F8F7;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#5a6b78;line-height:1.7;font-weight:600}
+
+  /* 탭 */
+  .tabs{display:flex;gap:6px;margin-bottom:12px}
+  .tab{flex:1;text-align:center;padding:12px 4px;border-radius:12px;font-size:13.5px;font-weight:900;
+    cursor:pointer;background:#fff;color:#5a6b78;box-shadow:0 2px 8px rgba(0,60,54,.06)}
+  .tab.on{background:#004D45;color:#fff}
+
+  /* 목록 */
+  .row{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid #eef2f4;font-size:14px;font-weight:700}
+  .row:last-child{border-bottom:none}
+  .row .grow{flex:1;line-height:1.45}
+  .row .sub{font-size:12px;color:#8a9aa5;font-weight:700}
+  .chip{font-size:11.5px;font-weight:900;padding:3px 10px;border-radius:20px;flex:none}
+  .chip.g{background:#E6F7F4;color:#00695E}
+  .chip.y{background:#FFF4B8;color:#6B4A00}
+  .chip.r{background:#FDECEA;color:#b3261e}
+  .chip.b{background:#E8EEF6;color:#2b5b8a}
+  .empty{font-size:13px;color:#8a9aa5;font-weight:700;padding:16px;text-align:center}
+
+  .loading{display:none;text-align:center;padding:24px 0;font-size:13.5px;font-weight:800;color:#007A6E}
+  .spin{width:30px;height:30px;border:4px solid #C6E5E0;border-top-color:#007A6E;border-radius:50%;
+    margin:0 auto 10px;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .screen{display:none}
+  .screen.on{display:block}
+
+  /* 서명 모달 */
+  .modal{display:none;position:fixed;inset:0;background:rgba(13,35,32,.75);z-index:50;
+    align-items:center;justify-content:center;padding:16px}
+  .modal.on{display:flex}
+  .modal-in{background:#fff;border-radius:18px;padding:18px;width:100%;max-width:480px}
+  .modal-in h3{font-size:16px;font-weight:900;color:#004D45;margin-bottom:4px}
+  .modal-in .who{font-size:13px;color:#5a6b78;font-weight:700;margin-bottom:10px}
+  #sig-canvas{width:100%;height:200px;border:2px dashed #9FD6CE;border-radius:12px;
+    background:#FAFCFC;touch-action:none;display:block}
+  .modal-btns{display:flex;gap:8px;margin-top:12px}
+  .modal-btns .btn{flex:1}
+
+  /* 리포트 */
+  .rp-head{text-align:center;margin-bottom:14px}
+  .rp-head .t{font-size:19px;font-weight:900;color:#004D45}
+  .rp-head .p{font-size:13px;font-weight:800;color:#5a6b78;margin-top:3px}
+  .rp-sum{display:flex;gap:8px;margin-bottom:14px}
+  .rp-sum .s{flex:1;background:#F4F8F7;border-radius:12px;padding:12px;text-align:center}
+  .rp-sum .s .n{font-size:22px;font-weight:900;color:#004D45}
+  .rp-sum .s .l{font-size:11.5px;font-weight:800;color:#7FA6A2}
+  .rp-sess{margin-bottom:18px}
+  .rp-sess-h{background:#004D45;color:#fff;border-radius:10px 10px 0 0;padding:9px 14px;
+    font-size:13.5px;font-weight:900;display:flex;justify-content:space-between}
+  table.rp{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.rp th{background:#EAF3F1;color:#00695E;font-weight:900;padding:7px 6px;border:1px solid #d7e0e6}
+  table.rp td{padding:6px;border:1px solid #d7e0e6;text-align:center;font-weight:700;vertical-align:middle}
+  table.rp td.l{text-align:left}
+  table.rp img.sig{height:30px;max-width:90px;object-fit:contain}
+  td.pass{color:#007A6E}
+  td.fail{color:#b3261e}
+  td.expd{color:#E11900;font-weight:900}
+
+  @media print{
+    @page{size:A4 portrait;margin:12mm}
+    body{background:#fff}
+    body *{visibility:hidden}
+    #rp-print,#rp-print *{visibility:visible}
+    #rp-print{position:absolute;left:0;top:0;width:100%}
+    .rp-sess{page-break-inside:avoid}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #homeBtn{display:none !important}
+  }
+
+  #homeBtn{
+    position:fixed; right:18px; bottom:18px; z-index:900;
+    width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg,#004D45,#007A6E 60%,#00B8A6);
+    box-shadow:0 6px 18px rgba(0,120,110,.4);
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; text-decoration:none; border:2px solid rgba(255,255,255,.25);
+  }
+  #homeBtn:active{ transform:scale(.94); }
+</style>
+</head>
+<body>
+
+<a id="homeBtn" href="https://sugilyang.github.io/ets-safety/" title="안전포털">🏠</a>
+
+<div class="wrap">
+
+  <div class="head">
+    <div class="co">주식회사 이티에스</div>
+    <h1>안전수칙준수인증 — 관리자</h1>
+  </div>
+
+  <div id="loading" class="loading"><div class="spin"></div><span id="loadmsg">처리 중...</span></div>
+
+  <!-- 관리자 로그인 -->
+  <div id="scr-pw" class="screen on">
+    <div class="box">
+      <h2>관리자 인증</h2>
+      <label>비밀번호</label>
+      <input type="password" id="in-pw" autocomplete="off">
+      <div id="pw-err" class="err"></div>
+      <button class="btn full" onclick="doAuth()">접속</button>
+    </div>
+    <div style="text-align:center;margin-top:4px">
+      <a href="index.html" style="font-size:12.5px;color:#8a9aa5;font-weight:800;text-decoration:none">← 사용자 페이지로</a>
+    </div>
+  </div>
+
+  <!-- 메인 -->
+  <div id="scr-main" class="screen">
+    <div class="tabs">
+      <div class="tab on" data-t="t-sched" onclick="tabTo(this)">📅 일정·신청</div>
+      <div class="tab" data-t="t-sign" onclick="tabTo(this)">✍️ 서명</div>
+      <div class="tab" data-t="t-report" onclick="tabTo(this)">📄 리포트</div>
+    </div>
+
+    <!-- 탭1: 일정·신청 -->
+    <div id="t-sched" class="tabpane">
+      <div class="box">
+        <h2>정기 교육 일정 등록</h2>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <div style="flex:1"><label>교육일</label><input type="date" id="sc-date"></div>
+          <button class="btn" onclick="addSchedule()">등록</button>
+        </div>
+      </div>
+      <div class="box">
+        <h2>수시 신청 승인대기 <span id="pd-cnt" class="chip y" style="margin-left:4px">0</span></h2>
+        <div id="pd-list"><div class="empty">불러오는 중...</div></div>
+        <div class="info" style="margin-top:8px">승인 시 확정일을 조정할 수 있으며, 확정·반려 결과는 신청자 이메일로 자동 발송됩니다.</div>
+      </div>
+      <div class="box">
+        <h2>교육 일정 목록</h2>
+        <div id="sc-list"><div class="empty">불러오는 중...</div></div>
+      </div>
+    </div>
+
+    <!-- 탭2: 서명 -->
+    <div id="t-sign" class="tabpane" style="display:none">
+      <div class="box">
+        <h2>교육 서명 (출석 확정)</h2>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <div style="flex:1"><label>교육일 선택</label><input type="date" id="sg-date"></div>
+          <button class="btn" onclick="loadRoster()">명단 불러오기</button>
+        </div>
+        <div class="info" style="margin-top:10px">
+          교육 종료 후 이 화면을 참석자에게 돌리며 서명을 받으세요.<br>
+          <b>서명한 인원만 교육이수로 자동 등록</b>되며, 서명하지 않은 신청자(불참)는 이수 처리되지 않습니다.
+        </div>
+      </div>
+      <div class="box" id="sg-roster-box" style="display:none">
+        <h2 id="sg-roster-title">명단</h2>
+        <div id="sg-roster"></div>
+      </div>
+    </div>
+
+    <!-- 탭3: 리포트 -->
+    <div id="t-report" class="tabpane" style="display:none">
+      <div class="box">
+        <h2>기간별 교육·시험·필증 리포트</h2>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1"><label>시작일</label><input type="date" id="rp-from"></div>
+          <div style="flex:1"><label>종료일</label><input type="date" id="rp-to"></div>
+        </div>
+        <button class="btn full" onclick="loadReport()">리포트 생성</button>
+      </div>
+      <div class="box" id="rp-box" style="display:none">
+        <button class="btn gold full" onclick="window.print()" style="margin:0 0 14px">🖨 인쇄 / PDF 저장</button>
+        <div id="rp-print"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 서명 모달 -->
+<div class="modal" id="sig-modal">
+  <div class="modal-in">
+    <h3>교육 이수 서명</h3>
+    <div class="who" id="sig-who"></div>
+    <canvas id="sig-canvas"></canvas>
+    <div class="modal-btns">
+      <button class="btn gray" onclick="sigClear()">다시 쓰기</button>
+      <button class="btn red" onclick="sigClose()">취소</button>
+      <button class="btn" onclick="sigSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ▼▼▼ GAS 웹앱 배포 URL 입력 (유저 페이지와 동일 URL) ▼▼▼ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbz5yLwcr9mdPhqKmPLae1oI7peAK9ZDeI5BWIqFkQG3GPcm73qCKr_kRhSkjYJWHd_LkA/exec';
+
+let PW = '';
+const $ = id => document.getElementById(id);
+function loading(on,msg){ $('loading').style.display=on?'block':'none'; if(msg)$('loadmsg').textContent=msg; }
+function esc(s){ const d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+async function api(payload){
+  payload.pw=PW;
+  const r=await fetch(API_URL,{method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  return r.json();
+}
+function err(id,msg){ const e=$(id); e.textContent=msg; e.style.display=msg?'block':'none'; }
+
+/* ── 인증 ── */
+async function doAuth(){
+  err('pw-err','');
+  PW=$('in-pw').value;
+  if(!PW){ err('pw-err','비밀번호를 입력하세요.'); return; }
+  loading(true,'인증 중...');
+  try{
+    const res=await api({action:'admAuth'});
+    loading(false);
+    if(!res.ok){ err('pw-err',res.msg||'인증 실패'); return; }
+    $('scr-pw').classList.remove('on');
+    $('scr-main').classList.add('on');
+    refreshList();
+  }catch(e){ loading(false); err('pw-err','서버 연결 실패'); }
+}
+$('in-pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doAuth(); });
+
+/* ── 탭 ── */
+function tabTo(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.tabpane').forEach(p=>p.style.display='none');
+  $(el.dataset.t).style.display='block';
+}
+
+/* ── 탭1: 일정·신청 ── */
+async function refreshList(){
+  try{
+    const res=await api({action:'admList'});
+    if(!res.ok){ alert(res.msg); return; }
+    /* 승인대기 */
+    $('pd-cnt').textContent=res.pending.length;
+    const pl=$('pd-list');
+    if(res.pending.length===0){ pl.innerHTML='<div class="empty">승인대기 중인 수시 신청이 없습니다.</div>'; }
+    else{
+      pl.innerHTML='';
+      res.pending.forEach(p=>{
+        pl.innerHTML+=
+        '<div class="row"><div class="grow">'+esc(p.name)+' <span class="sub">'+esc(p.dept)+' · '+esc(p.type)+'</span>'+
+          '<br><span class="sub">희망일 '+esc(p.hope)+' · 신청 '+esc(p.appliedAt)+'</span></div>'+
+          '<input type="date" value="'+esc(p.hope)+'" id="cd-'+esc(p.appId)+'" style="width:150px;padding:9px;font-size:13px">'+
+          '<button class="btn sm" onclick="decide(\''+esc(p.appId)+'\',true)">승인</button>'+
+          '<button class="btn sm red" onclick="decide(\''+esc(p.appId)+'\',false)">반려</button></div>';
+      });
+    }
+    /* 일정 목록 */
+    const sl=$('sc-list');
+    if(res.schedules.length===0){ sl.innerHTML='<div class="empty">등록된 정기 일정이 없습니다.</div>'; }
+    else{
+      sl.innerHTML='';
+      res.schedules.forEach(s=>{
+        const chip = s.status==='접수중'?'g':(s.status==='마감'?'y':'b');
+        sl.innerHTML+=
+        '<div class="row"><div class="grow"><b>'+esc(s.date)+'</b> 정기'+
+          '<br><span class="sub">접수 인원 '+s.count+'명</span></div>'+
+          '<span class="chip '+chip+'">'+esc(s.status)+'</span>'+
+          (s.status==='접수중'
+            ?'<button class="btn sm gray" onclick="schedStatus(\''+esc(s.id)+'\',\'마감\')">마감</button>'
+            :(s.status==='마감'
+              ?'<button class="btn sm" onclick="schedStatus(\''+esc(s.id)+'\',\'접수중\')">재개</button>'+
+               '<button class="btn sm gray" onclick="schedStatus(\''+esc(s.id)+'\',\'완료\')">완료</button>'
+              :''))+
+        '</div>';
+      });
+    }
+    if(res.adhocDates.length){
+      sl.innerHTML+='<div class="info" style="margin-top:8px">수시 확정 예정일: '+res.adhocDates.map(esc).join(', ')+'</div>';
+    }
+  }catch(e){ alert('목록을 불러오지 못했습니다.'); }
+}
+async function addSchedule(){
+  const d=$('sc-date').value;
+  if(!d){ alert('교육일을 선택하세요.'); return; }
+  loading(true,'등록 중...');
+  const res=await api({action:'admAddSchedule',date:d}).catch(()=>({ok:false,msg:'서버 오류'}));
+  loading(false);
+  if(!res.ok){ alert(res.msg); return; }
+  $('sc-date').value='';
+  refreshList();
+}
+async function schedStatus(id,status){
+  loading(true,'변경 중...');
+  const res=await api({action:'admSetScheduleStatus',id:id,status:status}).catch(()=>({ok:false,msg:'서버 오류'}));
+  loading(false);
+  if(!res.ok){ alert(res.msg); return; }
+  refreshList();
+}
+async function decide(appId,approve){
+  if(approve){
+    const cd=$('cd-'+appId).value;
+    if(!cd){ alert('확정 교육일을 지정하세요.'); return; }
+    if(!confirm('확정일 '+cd+'로 승인하시겠습니까?\n신청자에게 이메일이 발송됩니다.')) return;
+    loading(true,'승인 처리 중...');
+    const res=await api({action:'admDecideApp',appId:appId,decision:'approve',confirmDate:cd}).catch(()=>({ok:false,msg:'서버 오류'}));
+    loading(false);
+    if(!res.ok){ alert(res.msg); return; }
+  }else{
+    const reason=prompt('반려 사유 (선택, 이메일에 포함됨)','');
+    if(reason===null) return;
+    loading(true,'반려 처리 중...');
+    const res=await api({action:'admDecideApp',appId:appId,decision:'reject',reason:reason}).catch(()=>({ok:false,msg:'서버 오류'}));
+    loading(false);
+    if(!res.ok){ alert(res.msg); return; }
+  }
+  refreshList();
+}
+
+/* ── 탭2: 서명 ── */
+let ROSTER_DATE='';
+async function loadRoster(){
+  const d=$('sg-date').value;
+  if(!d){ alert('교육일을 선택하세요.'); return; }
+  ROSTER_DATE=d;
+  loading(true,'명단 불러오는 중...');
+  const res=await api({action:'admRoster',date:d}).catch(()=>({ok:false,msg:'서버 오류'}));
+  loading(false);
+  if(!res.ok){ alert(res.msg); return; }
+  const box=$('sg-roster-box'), list=$('sg-roster');
+  box.style.display='block';
+  $('sg-roster-title').textContent=d+' 교육 인원 ('+res.roster.length+'명)';
+  if(res.roster.length===0){ list.innerHTML='<div class="empty">해당 날짜에 확정된 교육 인원이 없습니다.</div>'; return; }
+  list.innerHTML='';
+  res.roster.forEach(p=>{
+    list.innerHTML+=
+    '<div class="row"><div class="grow">'+esc(p.name)+
+      ' <span class="sub">'+esc(p.dept)+' · '+esc(p.type)+' · '+esc(p.mode)+'</span></div>'+
+      (p.signed
+        ?'<span class="chip g">서명 완료</span>'
+        :'<button class="btn sm" onclick="sigOpen(\''+esc(p.memberId)+'\',\''+esc(p.name)+'\',\''+esc(p.dept)+'\')">✍️ 서명</button>')+
+    '</div>';
+  });
+}
+
+/* 서명 캔버스 */
+let SIG={ctx:null,drawn:false,memberId:''};
+function sigOpen(memberId,name,dept){
+  SIG.memberId=memberId; SIG.drawn=false;
+  $('sig-who').textContent=name+' ('+dept+') — '+ROSTER_DATE+' LOTO 교육';
+  $('sig-modal').classList.add('on');
+  const cv=$('sig-canvas');
+  cv.width=cv.offsetWidth*2; cv.height=cv.offsetHeight*2;   // 레티나 대응
+  const ctx=cv.getContext('2d');
+  ctx.scale(2,2);
+  ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0d2320';
+  SIG.ctx=ctx;
+  ctx.clearRect(0,0,cv.width,cv.height);
+}
+function sigPos(e){
+  const cv=$('sig-canvas'), r=cv.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  return {x:t.clientX-r.left, y:t.clientY-r.top};
+}
+let drawing=false;
+function sigStart(e){ e.preventDefault(); drawing=true; const p=sigPos(e); SIG.ctx.beginPath(); SIG.ctx.moveTo(p.x,p.y); }
+function sigMove(e){ if(!drawing) return; e.preventDefault(); const p=sigPos(e); SIG.ctx.lineTo(p.x,p.y); SIG.ctx.stroke(); SIG.drawn=true; }
+function sigEnd(){ drawing=false; }
+(function(){
+  const cv=$('sig-canvas');
+  cv.addEventListener('mousedown',sigStart); cv.addEventListener('mousemove',sigMove);
+  window.addEventListener('mouseup',sigEnd);
+  cv.addEventListener('touchstart',sigStart,{passive:false});
+  cv.addEventListener('touchmove',sigMove,{passive:false});
+  cv.addEventListener('touchend',sigEnd);
+})();
+function sigClear(){
+  const cv=$('sig-canvas');
+  SIG.ctx.clearRect(0,0,cv.width,cv.height); SIG.drawn=false;
+}
+function sigClose(){ $('sig-modal').classList.remove('on'); }
+async function sigSave(){
+  if(!SIG.drawn){ alert('서명을 입력하세요.'); return; }
+  // 저장 용량 절감: 축소 캔버스로 재추출
+  const src=$('sig-canvas');
+  const small=document.createElement('canvas');
+  small.width=360; small.height=Math.round(360*src.height/src.width);
+  small.getContext('2d').drawImage(src,0,0,small.width,small.height);
+  const img=small.toDataURL('image/png');
+  loading(true,'서명 저장 중...');
+  const res=await api({action:'admSign',memberId:SIG.memberId,date:ROSTER_DATE,image:img}).catch(()=>({ok:false,msg:'서버 오류'}));
+  loading(false);
+  if(!res.ok){ alert(res.msg); return; }
+  sigClose();
+  loadRoster();  // 서명 완료 반영
+}
+
+/* ── 탭3: 리포트 ── */
+async function loadReport(){
+  const f=$('rp-from').value, t=$('rp-to').value;
+  if(!f||!t){ alert('시작일과 종료일을 선택하세요.'); return; }
+  if(f>t){ alert('기간이 올바르지 않습니다.'); return; }
+  loading(true,'리포트 생성 중...');
+  const res=await api({action:'admReport',from:f,to:t}).catch(()=>({ok:false,msg:'서버 오류'}));
+  loading(false);
+  if(!res.ok){ alert(res.msg); return; }
+  const out=$('rp-print');
+  let html=
+  '<div class="rp-head"><div class="t">안전수칙준수인증 교육·시험 결과 보고서</div>'+
+  '<div class="p">기간: '+esc(res.from)+' ~ '+esc(res.to)+' · 주식회사 이티에스</div></div>'+
+  '<div class="rp-sum">'+
+    '<div class="s"><div class="n">'+res.summary.sessions+'</div><div class="l">교육 실시(회)</div></div>'+
+    '<div class="s"><div class="n">'+res.summary.attendees+'</div><div class="l">이수 인원(명)</div></div>'+
+    '<div class="s"><div class="n">'+res.summary.passed+'</div><div class="l">시험 합격(명)</div></div>'+
+  '</div>';
+  if(res.sessions.length===0){
+    html+='<div class="empty">해당 기간에 실시된 교육(서명 기록)이 없습니다.</div>';
+  }
+  res.sessions.forEach(s=>{
+    html+='<div class="rp-sess">'+
+    '<div class="rp-sess-h"><span>'+esc(s.date)+' · '+esc(s.kind)+' 안전교육 (LOTO)</span><span>'+s.attendees.length+'명</span></div>'+
+    '<table class="rp"><tr><th>이름</th><th>소속</th><th>구분</th><th>서명</th><th>점수</th><th>결과</th><th>필증 발급일</th><th>만료일</th></tr>';
+    s.attendees.forEach(a=>{
+      html+='<tr><td>'+esc(a.name)+'</td><td class="l">'+esc(a.dept)+'</td><td>'+esc(a.type)+'</td>'+
+      '<td>'+(a.sig?'<img class="sig" src="'+a.sig+'">':'-')+'</td>'+
+      '<td>'+(a.score!==''?esc(a.score)+'점':'-')+'</td>'+
+      '<td class="'+(a.result==='합격'?'pass':(a.result==='불합격'?'fail':''))+'">'+esc(a.result)+'</td>'+
+      '<td>'+(a.issue||'-')+'</td><td class="expd">'+(a.expire||'-')+'</td></tr>';
+    });
+    html+='</table></div>';
+  });
+  html+='<div style="font-size:11px;color:#8a9aa5;font-weight:700;text-align:right">출력일: '+
+    new Date().toISOString().slice(0,10)+' · ETS 안전수칙준수인증 시스템</div>';
+  out.innerHTML=html;
+  $('rp-box').style.display='block';
+  out.scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>
