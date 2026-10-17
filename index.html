@@ -212,6 +212,7 @@
   .verdict.fail{color:#E11900}
 
   .loading{display:none;text-align:center;padding:30px 0;font-size:14px;font-weight:800;color:#007A6E}
+  .loadsub{margin-top:10px;font-size:12.5px;font-weight:500;color:#5a6b78;line-height:1.6;word-break:keep-all;min-height:1.6em}
   .spin{width:34px;height:34px;border:4px solid #C6E5E0;border-top-color:#007A6E;border-radius:50%;
     margin:0 auto 12px;animation:sp 0.8s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
@@ -257,7 +258,7 @@
     <div class="sub">교육 신청 · LOTO 온라인 시험 · 필증 조회 및 출력</div>
   </div>
 
-  <div id="loading" class="loading"><div class="spin"></div><span id="loadmsg">확인 중...</span></div>
+  <div id="loading" class="loading"><div class="spin"></div><span id="loadmsg">확인 중...</span><div id="loadsub" class="loadsub"></div></div>
 
   <!-- ⓪ 시작 (2버튼 분기) -->
   <div id="scr-start" class="screen on">
@@ -425,10 +426,26 @@ function show(id){
   $(id).classList.add('on');
   window.scrollTo(0,0);
 }
-function loading(on,msg){
+/* 로딩 표시 — 오래 걸리면 경과시간과 상황 안내가 바뀌어 "멈춘 게 아님"을 알려준다 */
+let LOAD_T=null, LOAD_T0=0, LOAD_WAIT=false;
+function loading(on,msg,waitable){
   $('loading').style.display = on?'block':'none';
   if(msg) $('loadmsg').textContent = msg;
+  if(LOAD_T){ clearInterval(LOAD_T); LOAD_T=null; }
+  $('loadsub').textContent='';
+  LOAD_WAIT = !!(on && waitable);
+  if(!LOAD_WAIT) return;
+  LOAD_T0=Date.now();
+  LOAD_T=setInterval(()=>{
+    const s=Math.floor((Date.now()-LOAD_T0)/1000);
+    let tip='';
+    if(s>=15)      tip='거의 다 됐습니다. 이 화면을 닫지 마세요.';
+    else if(s>=5)  tip='여러 명이 동시에 제출하면 조금 더 걸릴 수 있습니다.';
+    $('loadsub').textContent=(s>0?s+'초 경과':'')+(tip?'  ·  '+tip:'');
+  },1000);
 }
+/* 제출 처리 중 새로고침·뒤로가기 방지 */
+window.addEventListener('beforeunload',e=>{ if(LOAD_WAIT){ e.preventDefault(); e.returnValue=''; } });
 /* 서버 호출: 타임아웃 + 자동 재시도
  *  - 25초 안에 응답 없으면 끊고 다시 시도 (최대 3회)
  *  - 모바일에서 네트워크가 잠깐 끊겨도 사용자가 다시 누르지 않아도 됨
@@ -655,7 +672,7 @@ async function reloadHome(){
 
 /* ── 시험 ── */
 async function startExam(){
-  loading(true,'문제를 출제하는 중...'); $('scr-home').classList.remove('on');
+  loading(true,'문제를 출제하는 중...',true); $('scr-home').classList.remove('on');
   try{
     const res=await api({action:'getExam',name:AUTH.name,phone4:AUTH.phone4});
     loading(false);
@@ -704,7 +721,7 @@ async function submitExam(){
     qid:q.qid, oi:Number(document.querySelector('input[name=q'+qi+']:checked').value)
   }));
   SUBMITTING=true;
-  loading(true,'채점 중...'); $('scr-exam').classList.remove('on');
+  loading(true,'채점 중...',true); $('scr-exam').classList.remove('on');
   try{
     // 채점은 서버가 이미 받았을 수 있으므로 재시도 1회, 타임아웃은 넉넉히
     const res=await api({action:'submitExam',name:AUTH.name,phone4:AUTH.phone4,answers:answers},{retries:2,timeout:40000});
