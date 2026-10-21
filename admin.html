@@ -191,6 +191,8 @@
       <div class="box" id="sg-roster-box" style="display:none">
         <h2 id="sg-roster-title">명단</h2>
         <div id="sg-roster"></div>
+        <button class="btn gold full" onclick="bulkEdu()" style="margin-top:12px">📋 종이 서명 받음 — 전원 이수 처리</button>
+        <div class="info" style="margin-top:6px">현장에서 종이 서명지를 받은 경우 사용합니다. 명단 전원이 교육이수로 등록되어 바로 시험을 볼 수 있습니다. 이미 서명·이수된 인원은 건너뜁니다.</div>
       </div>
     </div>
 
@@ -401,7 +403,7 @@ async function loadRoster(){
     '<div class="row"><div class="grow">'+esc(p.name)+
       ' <span class="sub">'+esc(p.dept)+' · '+esc(p.type)+' · '+esc(p.mode)+'</span></div>'+
       (p.signed
-        ?'<span class="chip g">서명 완료</span>'
+        ?'<span class="chip g">이수 완료</span>'
         :'<button class="btn sm" onclick="sigOpen(\''+esc(p.memberId)+'\',\''+esc(p.name)+'\',\''+esc(p.dept)+'\')">✍️ 서명</button>')+
     '</div>';
   });
@@ -443,6 +445,16 @@ function sigClear(){
   SIG.ctx.clearRect(0,0,cv.width,cv.height); SIG.drawn=false;
 }
 function sigClose(){ $('sig-modal').classList.remove('on'); }
+async function bulkEdu(){
+  if(!ROSTER_DATE) return;
+  if(!confirm(ROSTER_DATE+' 교육 명단 전원을 교육이수로 등록할까요?\n(종이 서명지를 보관하는 경우에만 사용)')) return;
+  loading(true,'일괄 이수 처리 중...');
+  const res=await api({action:'admBulkEdu',date:ROSTER_DATE}).catch(()=>({ok:false,msg:'서버 오류'}));
+  loading(false);
+  if(!res.ok){ alert(res.msg||'처리 실패'); return; }
+  alert('이수 등록 '+res.added+'명 (명단 '+res.total+'명)\n이제 각자 로그인하여 시험을 볼 수 있습니다.');
+  loadRoster();
+}
 async function sigSave(){
   if(!SIG.drawn){ alert('서명을 입력하세요.'); return; }
   // 저장 용량 절감: 축소 캔버스로 재추출
@@ -486,7 +498,7 @@ async function loadReport(){
     '<table class="rp"><tr><th>이름</th><th>교육이수일</th><th>소속</th><th>구분</th><th>서명</th><th>점수</th><th>결과</th><th>인증 시작일</th><th>만료일</th></tr>';
     s.attendees.forEach(a=>{
       html+='<tr><td>'+esc(a.name)+'</td><td>'+esc(s.date)+'</td><td class="l">'+esc(a.dept)+'</td><td>'+esc(a.type)+'</td>'+
-      '<td>'+(a.sig?'<img class="sig" src="'+a.sig+'">':'-')+'</td>'+
+      '<td>'+(a.sig==='PAPER'?'종이':a.sig?'<img class="sig" src="'+a.sig+'">':'-')+'</td>'+
       '<td>'+(a.score!==''?esc(a.score)+'점':'-')+'</td>'+
       '<td class="'+(a.result==='합격'?'pass':(a.result==='불합격'?'fail':''))+'">'+esc(a.result)+'</td>'+
       '<td>'+(a.issue||'-')+'</td><td class="expd">'+(a.expire||'-')+'</td></tr>';
