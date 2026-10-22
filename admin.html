@@ -594,7 +594,7 @@ async function loadLabels(){
   const sd=d=>String(d).slice(2);
   let h='<table class="rp lbt"><tr><th></th><th>이름</th><th>소속</th><th>발급일</th><th>만료일</th></tr>';
   LB_ROWS.forEach((r,i)=>{
-    h+='<tr><td><input type="checkbox" class="lb-ck" data-i="'+i+'" checked onchange="lbCount()"></td><td>'+esc(r.name)+'</td><td class="l">'+(r.type==='협력사'?'<span class="chip y" style="margin-right:3px">협</span>':'')+esc(r.dept)+'</td><td>'+sd(r.issue)+'</td><td>'+sd(r.expire)+'</td></tr>';
+    h+='<tr><td><input type="checkbox" class="lb-ck" data-i="'+i+'" checked onchange="lbCount()"></td><td>'+esc(r.name)+'</td><td class="l">'+(r.type==='협력사'?'<span class="chip y" style="margin-right:4px;padding:2px 6px;font-size:10.5px">협력사</span>':'')+esc(r.dept)+'</td><td>'+sd(r.issue)+'</td><td>'+sd(r.expire)+'</td></tr>';
   });
   $('lb-list').innerHTML=h+'</table>'; lbCount();
 }
