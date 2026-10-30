@@ -100,7 +100,10 @@
   table.lbt td.l{max-width:110px;overflow:hidden;text-overflow:ellipsis}
   td.expd{color:#E11900;font-weight:900}
   /* 리포트 표: 칸 고정 · 한 줄 표시 */
-  table.rp.rpt{table-layout:fixed;font-size:11.5px}
+  .rp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .rp-hint{display:none;font-size:11.5px;color:#8a9aa5;font-weight:800;text-align:right;margin:4px 2px 0}
+  @media (max-width:800px){ .rp-hint{display:block} }
+  table.rp.rpt{table-layout:fixed;font-size:11.5px;min-width:760px}
   table.rp.rpt th,table.rp.rpt td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:5px 3px}
   table.rp.rpt td.l{padding-left:6px}
   table.rp.rpt tr{page-break-inside:avoid}
@@ -113,7 +116,9 @@
     #rp-print,#rp-print *{visibility:visible}
     #rp-print{position:absolute;left:0;top:0;width:100%}
     .rp-sess-h{page-break-after:avoid}
-    table.rp.rpt{font-size:9pt}
+    .rp-scroll{overflow:visible}
+    .rp-hint{display:none !important}
+    table.rp.rpt{font-size:9pt;min-width:0}
     table.rp.rpt th,table.rp.rpt td{padding:2px 3px;line-height:1.25}
     table.rp.rpt img.sig{height:16px}
     .rp-sum{margin-bottom:6px}
@@ -590,7 +595,7 @@ async function loadReport(){
   res.sessions.forEach(s=>{
     html+='<div class="rp-sess">'+
     '<div class="rp-sess-h"><span>'+esc(s.date)+' · '+esc(s.kind)+' 안전교육 (LOTO)</span><span>'+s.attendees.length+'명</span></div>'+
-    '<table class="rp rpt"><colgroup><col style="width:5%"><col style="width:11%"><col style="width:11%"><col style="width:17%"><col style="width:8%"><col style="width:10%"><col style="width:7%"><col style="width:8%"><col style="width:11.5%"><col style="width:11.5%"></colgroup>'+
+    '<div class="rp-scroll"><table class="rp rpt"><colgroup><col style="width:5%"><col style="width:11%"><col style="width:11%"><col style="width:17%"><col style="width:8%"><col style="width:10%"><col style="width:7%"><col style="width:8%"><col style="width:11.5%"><col style="width:11.5%"></colgroup>'+
     '<thead><tr><th>No</th><th>이름</th><th>교육이수일</th><th>소속</th><th>구분</th><th>서명</th><th>점수</th><th>결과</th><th>인증 시작일</th><th>만료일</th></tr></thead><tbody>';
     const sd=d=>d?String(d).slice(2).replace(/-/g,'.'):'-';
     s.attendees.forEach((a,ai)=>{
@@ -600,7 +605,7 @@ async function loadReport(){
       '<td class="'+(a.result==='합격'?'pass':(a.result==='불합격'?'fail':''))+'">'+esc(a.result)+'</td>'+
       '<td>'+sd(a.issue)+'</td><td class="expd">'+sd(a.expire)+'</td></tr>';
     });
-    html+='</tbody></table></div>';
+    html+='</tbody></table></div><div class="rp-hint">표를 옆으로 밀어서 보세요 →</div></div>';
   });
   html+='<div style="font-size:11px;color:#8a9aa5;font-weight:700;text-align:right">출력일: '+
     new Date().toISOString().slice(0,10)+' · ETS 안전수칙준수인증 시스템</div>';
