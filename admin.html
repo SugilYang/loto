@@ -592,7 +592,7 @@ async function loadReport(){
     const sd=d=>d?String(d).slice(2).replace(/-/g,'.'):'-';
     s.attendees.forEach((a,ai)=>{
       html+='<tr><td>'+(ai+1)+'</td><td title="'+esc(a.name)+'"'+(String(a.name).length>8?' style="font-size:'+(String(a.name).length>14?'7.5':'9')+'px;white-space:normal;line-height:1.15"':'')+'>'+esc(a.name)+'</td><td>'+sd(s.date)+'</td><td class="l" title="'+esc(a.dept)+'">'+esc(a.dept)+'</td><td>'+esc(a.type)+'</td>'+
-      '<td>'+(a.sig==='PAPER'?'종이':a.sig?'<img class="sig" src="'+a.sig+'">':'-')+'</td>'+
+      '<td>'+(a.sig==='PAPER'?'서면':a.sig?'<img class="sig" src="'+a.sig+'">':'-')+'</td>'+
       '<td>'+(a.score!==''?esc(a.score):'-')+'</td>'+
       '<td class="'+(a.result==='합격'?'pass':(a.result==='불합격'?'fail':''))+'">'+esc(a.result)+'</td>'+
       '<td>'+sd(a.issue)+'</td><td class="expd">'+sd(a.expire)+'</td></tr>';
