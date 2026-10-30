@@ -95,7 +95,7 @@
   td.fail{color:#b3261e}
   .applist{margin:-4px 0 8px 10px;padding-left:10px;border-left:3px solid #d7e0e6}
   .row.sub2{padding:7px 0}
-  #edit-modal select,#edit-modal input{width:100%;padding:10px;border:1.5px solid #d7e0e6;border-radius:10px;font-size:15px;margin-bottom:8px;font-family:inherit}
+  #edit-modal select,#edit-modal input,#sg-date{width:100%;padding:10px;border:1.5px solid #d7e0e6;border-radius:10px;font-size:15px;margin-bottom:8px;font-family:inherit}
   table.lbt td,table.lbt th{white-space:nowrap;padding:6px 4px;font-size:12px}
   table.lbt td.l{max-width:110px;overflow:hidden;text-overflow:ellipsis}
   td.expd{color:#E11900;font-weight:900}
@@ -183,8 +183,8 @@
       <div class="box">
         <h2>교육 서명 (출석 확정)</h2>
         <div style="display:flex;gap:8px;align-items:flex-end">
-          <div style="flex:1"><label>교육일 선택</label><input type="date" id="sg-date"></div>
-          <button class="btn" onclick="loadRoster()">명단 불러오기</button>
+          <div style="flex:1"><label>교육일 선택</label><select id="sg-date" onchange="if(this.value) loadRoster()"><option value="">불러오는 중...</option></select></div>
+          <button class="btn gray" onclick="loadDates()" title="목록 새로고침">↻</button>
         </div>
         <div class="info" style="margin-top:10px">
           교육 종료 후 이 화면을 참석자에게 돌리며 서명을 받으세요.<br>
@@ -257,7 +257,7 @@
     <select id="ed-kind"><option>임직원</option><option>협력사</option></select>
     <label>소속 (협력사는 회사명)</label><input id="ed-dept">
     <label>이름</label><input id="ed-name">
-    <label>핸드폰번호</label><input id="ed-phone" inputmode="numeric" placeholder="01012345678">
+    <label>핸드폰번호</label><input id="ed-phone" type="tel" inputmode="numeric" maxlength="13" placeholder="010-1234-5678" oninput="this.value=fmtPhone(this.value)">
     <label>이메일</label><input id="ed-email" inputmode="email">
     <div class="modal-btns">
       <button class="btn red" onclick="editClose()">취소</button>
@@ -319,6 +319,27 @@ function tabTo(el){
   el.classList.add('on');
   document.querySelectorAll('.tabpane').forEach(p=>p.style.display='none');
   $(el.dataset.t).style.display='block';
+  if(el.dataset.t==='t-sign') loadDates();
+}
+
+/* 서명 탭: 실제 교육이 있는 날짜만 목록으로 */
+async function loadDates(){
+  const sel=$('sg-date'), keep=sel.value;
+  const res=await api({action:'admTrainingDates'}).catch(()=>({ok:false}));
+  if(!res.ok){ sel.innerHTML='<option value="">목록을 불러오지 못했습니다 (GAS 11차 필요)</option>'; return; }
+  const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+  const wd='일월화수목금토';
+  sel.innerHTML='<option value="">교육일을 선택하세요</option>'+res.dates.map(d=>{
+    const w=wd[new Date(d.date+'T00:00:00').getDay()];
+    const tag=d.date===today?' · 오늘':(d.date>today?' · 예정':'');
+    return '<option value="'+d.date+'">'+d.date+' ('+w+') '+d.kind+' · '+d.count+'명'+tag+'</option>';
+  }).join('');
+  if(keep && res.dates.some(d=>d.date===keep)) sel.value=keep;
+  else if(res.dates.some(d=>d.date===today)){ sel.value=today; }
+}
+function fmtPhone(v){
+  const d=String(v||'').replace(/\D/g,'').slice(0,11);
+  return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7);
 }
 
 /* ── 탭1: 일정·신청 ── */
@@ -426,12 +447,13 @@ function editOpen(date,id){
   const p=(APPL[date]||[]).find(x=>x.memberId===id); if(!p) return;
   EDIT_ID=id;
   $('ed-kind').value=p.type||'임직원'; $('ed-dept').value=p.dept||''; $('ed-name').value=p.name||'';
-  $('ed-phone').value=p.phone||''; $('ed-email').value=p.email||'';
+  $('ed-phone').value=fmtPhone(p.phone||''); $('ed-email').value=p.email||'';
   $('edit-modal').classList.add('on');
 }
 function editClose(){ $('edit-modal').classList.remove('on'); }
 async function editSave(){
-  const profile={kind:$('ed-kind').value,dept:$('ed-dept').value.trim(),name:$('ed-name').value.trim(),phone:$('ed-phone').value.trim(),email:$('ed-email').value.trim()};
+  if(!/^010\d{8}$/.test($('ed-phone').value.replace(/\D/g,''))){ alert('핸드폰 번호를 010-0000-0000 형식으로 입력하세요.'); return; }
+  const profile={kind:$('ed-kind').value,dept:$('ed-dept').value.trim(),name:$('ed-name').value.trim(),phone:$('ed-phone').value.replace(/\D/g,''),email:$('ed-email').value.trim()};
   loading(true,'저장 중...');
   const res=await api({action:'admUpdateMember',memberId:EDIT_ID,profile:profile}).catch(()=>({ok:false,msg:'서버 오류'}));
   loading(false);

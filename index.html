@@ -316,7 +316,7 @@
       <label>이름</label>
       <input type="text" id="ap-name" placeholder="홍길동" autocomplete="off">
       <label>핸드폰 번호 (전체)</label>
-      <input type="tel" id="ap-phone" placeholder="01012345678" maxlength="13" inputmode="numeric" autocomplete="off">
+      <input type="tel" id="ap-phone" placeholder="010-1234-5678" maxlength="13" inputmode="numeric" autocomplete="off" oninput="this.value=fmtPhone(this.value)">
       <label>이메일 (일정 확정·만료 알림 수신)</label>
       <input type="email" id="ap-email" placeholder="name@example.com" autocomplete="off">
 
@@ -419,6 +419,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz5yLwcr9mdPhqKmPLae1oI
 
 let AUTH = null;
 let QUESTIONS = [];
+function fmtPhone(v){
+  const d=String(v||'').replace(/\D/g,'').slice(0,11);
+  return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7);
+}
 
 const $ = id => document.getElementById(id);
 function show(id){
@@ -551,7 +555,7 @@ async function submitApply(){
     email:$('ap-email').value.trim()
   };
   if(!profile.dept||!profile.name){ err('ap-err','소속과 이름을 입력하세요.'); return; }
-  if(profile.phone.length<10){ err('ap-err','핸드폰 번호 전체를 정확히 입력하세요.'); return; }
+  if(!/^010\d{8}$/.test(profile.phone)){ err('ap-err','핸드폰 번호를 010-0000-0000 형식으로 정확히 입력하세요.\n(시험 로그인에 뒷자리 4개를 사용합니다)'); return; }
   if(profile.email.indexOf('@')<1){ err('ap-err','이메일 주소를 정확히 입력하세요.'); return; }
   const mode=segVal('ap-mode');
   const payload={action:'applyEdu',profile:profile,mode:mode};
