@@ -99,6 +99,12 @@
   table.lbt td,table.lbt th{white-space:nowrap;padding:6px 4px;font-size:12px}
   table.lbt td.l{max-width:110px;overflow:hidden;text-overflow:ellipsis}
   td.expd{color:#E11900;font-weight:900}
+  /* 리포트 표: 칸 고정 · 한 줄 표시 */
+  table.rp.rpt{table-layout:fixed;font-size:11.5px}
+  table.rp.rpt th,table.rp.rpt td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:5px 3px}
+  table.rp.rpt td.l{padding-left:6px}
+  table.rp.rpt tr{page-break-inside:avoid}
+  table.rp.rpt img.sig{height:22px;max-width:100%}
 
   @media print{
     @page{size:A4 portrait;margin:12mm}
@@ -106,7 +112,9 @@
     body *{visibility:hidden}
     #rp-print,#rp-print *{visibility:visible}
     #rp-print{position:absolute;left:0;top:0;width:100%}
-    .rp-sess{page-break-inside:avoid}
+    .rp-sess-h{page-break-after:avoid}
+    table.rp.rpt{font-size:9.5pt}
+    table.rp.rpt thead{display:table-header-group}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     #homeBtn{display:none !important}
   }
@@ -579,15 +587,17 @@ async function loadReport(){
   res.sessions.forEach(s=>{
     html+='<div class="rp-sess">'+
     '<div class="rp-sess-h"><span>'+esc(s.date)+' · '+esc(s.kind)+' 안전교육 (LOTO)</span><span>'+s.attendees.length+'명</span></div>'+
-    '<table class="rp"><tr><th>이름</th><th>교육이수일</th><th>소속</th><th>구분</th><th>서명</th><th>점수</th><th>결과</th><th>인증 시작일</th><th>만료일</th></tr>';
-    s.attendees.forEach(a=>{
-      html+='<tr><td>'+esc(a.name)+'</td><td>'+esc(s.date)+'</td><td class="l">'+esc(a.dept)+'</td><td>'+esc(a.type)+'</td>'+
+    '<table class="rp rpt"><colgroup><col style="width:5%"><col style="width:11%"><col style="width:11%"><col style="width:17%"><col style="width:8%"><col style="width:10%"><col style="width:7%"><col style="width:8%"><col style="width:11.5%"><col style="width:11.5%"></colgroup>'+
+    '<thead><tr><th>No</th><th>이름</th><th>교육이수일</th><th>소속</th><th>구분</th><th>서명</th><th>점수</th><th>결과</th><th>인증 시작일</th><th>만료일</th></tr></thead><tbody>';
+    const sd=d=>d?String(d).slice(2).replace(/-/g,'.'):'-';
+    s.attendees.forEach((a,ai)=>{
+      html+='<tr><td>'+(ai+1)+'</td><td title="'+esc(a.name)+'"'+(String(a.name).length>8?' style="font-size:'+(String(a.name).length>14?'7.5':'9')+'px;white-space:normal;line-height:1.15"':'')+'>'+esc(a.name)+'</td><td>'+sd(s.date)+'</td><td class="l" title="'+esc(a.dept)+'">'+esc(a.dept)+'</td><td>'+esc(a.type)+'</td>'+
       '<td>'+(a.sig==='PAPER'?'종이':a.sig?'<img class="sig" src="'+a.sig+'">':'-')+'</td>'+
-      '<td>'+(a.score!==''?esc(a.score)+'점':'-')+'</td>'+
+      '<td>'+(a.score!==''?esc(a.score):'-')+'</td>'+
       '<td class="'+(a.result==='합격'?'pass':(a.result==='불합격'?'fail':''))+'">'+esc(a.result)+'</td>'+
-      '<td>'+(a.issue||'-')+'</td><td class="expd">'+(a.expire||'-')+'</td></tr>';
+      '<td>'+sd(a.issue)+'</td><td class="expd">'+sd(a.expire)+'</td></tr>';
     });
-    html+='</table></div>';
+    html+='</tbody></table></div>';
   });
   html+='<div style="font-size:11px;color:#8a9aa5;font-weight:700;text-align:right">출력일: '+
     new Date().toISOString().slice(0,10)+' · ETS 안전수칙준수인증 시스템</div>';
