@@ -235,6 +235,7 @@
         <div style="display:flex;gap:8px;margin-bottom:8px">
           <button class="btn gray" style="flex:1" onclick="lbCheckAll(true)">전체 선택</button>
           <button class="btn gray" style="flex:1" onclick="lbCheckAll(false)">전체 해제</button>
+          <button class="btn" style="flex:1.2" onclick="lbCheckUnprinted()">미출력만</button>
         </div>
         <div id="lb-list"></div>
         <div style="display:flex;gap:8px;margin-top:12px;align-items:flex-end">
@@ -611,15 +612,26 @@ async function loadLabels(){
   if(!res.ok){ alert(res.msg||'조회 실패'); return; }
   LB_ROWS=res.rows;
   $('lb-box').style.display='block';
-  $('lb-title').textContent='대상자 '+LB_ROWS.length+'명 (발급 '+f+' ~ '+t+')';
+  const np=LB_ROWS.filter(r=>!r.printed).length;
+  $('lb-title').innerHTML='대상자 '+LB_ROWS.length+'명 <span class="chip g" style="margin-left:6px">미출력 '+np+'</span> <span class="chip" style="background:#eef0f0;color:#7a8487">출력완료 '+(LB_ROWS.length-np)+'</span>';
   if(!LB_ROWS.length){ $('lb-list').innerHTML='<div class="empty">해당 기간 발급된 필증이 없습니다.</div>'; lbCount(); return; }
   const sd=d=>String(d).slice(2);
-  let h='<table class="rp lbt"><tr><th></th><th>이름</th><th>소속</th><th>발급일</th><th>만료일</th></tr>';
+  let h='<table class="rp lbt"><tr><th></th><th>이름</th><th>소속</th><th>발급일</th><th>출력</th></tr>';
   LB_ROWS.forEach((r,i)=>{
-    h+='<tr><td><input type="checkbox" class="lb-ck" data-i="'+i+'" checked onchange="lbCount()"></td><td>'+esc(r.name)+'</td><td class="l">'+(r.type==='협력사'?'<span class="chip y" style="margin-right:4px;padding:2px 6px;font-size:10.5px">협력사</span>':'')+esc(r.dept)+'</td><td>'+sd(r.issue)+'</td><td>'+sd(r.expire)+'</td></tr>';
+    const pr=r.printed?'<span style="color:#9aa0a0;font-weight:800">'+esc(String(r.printed).slice(5).replace('-','/'))+'</span>':'<span style="color:#007A6E;font-weight:900">미출력</span>';
+    h+='<tr'+(r.printed?' style="background:#f6f7f7;color:#9aa0a0"':'')+'><td><input type="checkbox" class="lb-ck" data-i="'+i+'" '+(r.printed?'':'checked')+' onchange="lbCount()"></td><td>'+esc(r.name)+'</td><td class="l">'+(r.type==='협력사'?'<span class="chip y" style="margin-right:4px;padding:2px 6px;font-size:10.5px">협력사</span>':'')+esc(r.dept)+'</td><td>'+sd(r.issue)+'</td><td>'+pr+'</td></tr>';
   });
   $('lb-list').innerHTML=h+'</table>'; lbCount();
 }
+async function markPrinted(rows){
+  if(!confirm(rows.length+'명 라벨이 정상적으로 인쇄됐나요?\n[확인]을 누르면 「출력 완료」로 표시되어 다음부터 미출력 명단에서 빠집니다.')) return;
+  loading(true,'출력 완료 표시 중...');
+  const res=await api({action:'admMarkPrinted',items:rows.map(r=>({id:r.id,issue:r.issue}))}).catch(()=>({ok:false,msg:'서버 오류'}));
+  loading(false);
+  if(!res.ok){ alert(res.msg||'표시 실패 (GAS 11차 필요)'); return; }
+  loadLabels();
+}
+function lbCheckUnprinted(){ document.querySelectorAll('.lb-ck').forEach(c=>c.checked=!LB_ROWS[+c.dataset.i].printed); lbCount(); }
 function lbCheckAll(v){ document.querySelectorAll('.lb-ck').forEach(c=>c.checked=v); lbCount(); }
 function lbSelected(){ return [...document.querySelectorAll('.lb-ck:checked')].map(c=>LB_ROWS[+c.dataset.i]); }
 function lbCount(){ const n=lbSelected().length; $('lb-cnt').textContent='('+n+'명 · '+Math.ceil(n/12)+'장)'; }
@@ -664,7 +676,10 @@ function printLabels(){
   if(!w){ alert('팝업이 차단되었습니다. 이 사이트의 팝업을 허용해 주세요.'); return; }
   w.document.write('<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>필증 라벨 '+rows.length+'명</title><style>'+css+'</style></head><body>'+sheets+'</body></html>');
   w.document.close();
-  w.onload=()=>{ setTimeout(()=>{ w.focus(); w.print(); },300); };
+  w.onload=()=>{ setTimeout(()=>{
+    w.focus(); w.print();
+    setTimeout(()=>markPrinted(rows),400);
+  },300); };
 }
 </script>
 </body>
